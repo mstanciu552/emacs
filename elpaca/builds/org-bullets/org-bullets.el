@@ -1,0 +1,1 @@
+/home/sc0p3/.config/emacs/elpaca/repos/org-bullets/org-bullets.el

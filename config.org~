@@ -1,0 +1,353 @@
+#+title:GNU Emacs Config from Scratch
+#+author:Mihai Stanciu
+#+startup: showeverything
+#+options: toc:2
+
+* Table of Contents :toc:
+- [[#elpaca-package-manager][Elpaca Package Manager]]
+- [[#install-evil-mode][Install Evil Mode]]
+- [[#fonts-and-appearance][Fonts and Appearance]]
+  - [[#theme][Theme]]
+  - [[#all-the-icons][All The Icons]]
+  - [[#fonts][Fonts]]
+  - [[#gui-settings][GUI Settings]]
+- [[#install-general-keybindings][Install General Keybindings]]
+- [[#which-key][Which-Key]]
+- [[#org-mode-configurations][Org Mode Configurations]]
+  - [[#enable-table-of-contents][Enable Table of Contents]]
+  - [[#enable-org-bullets][Enable Org Bullets]]
+  - [[#disable-electric-indent][Disable Electric Indent]]
+  - [[#org-tempo][Org-tempo]]
+  - [[#enable-inline-images-on-startup][Enable inline images on startup]]
+  - [[#setup-org-download][Setup org-download]]
+- [[#ivy-and-counsel][IVY and Counsel]]
+  - [[#ivy][Ivy]]
+  - [[#counsel][Counsel]]
+  - [[#all-the-icons-ivy][All-the-icons-ivy]]
+  - [[#ivy-rich][Ivy-rich]]
+- [[#shells-and-terminals][Shells and Terminals]]
+  - [[#eshell][Eshell]]
+  - [[#vterm][Vterm]]
+  - [[#vterm-toggle][Vterm-toggle]]
+
+* Elpaca Package Manager
+
+#+begin_src emacs-lisp
+
+  (defvar elpaca-installer-version 0.9)
+  (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+  (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+  (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+  (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                                :ref nil :depth 1
+                                :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+                                :build (:not elpaca--activate-package)))
+  (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+         (build (expand-file-name "elpaca/" elpaca-builds-directory))
+         (order (cdr elpaca-order))
+         (default-directory repo))
+    (add-to-list 'load-path (if (file-exists-p build) build repo))
+    (unless (file-exists-p repo)
+      (make-directory repo t)
+      (when (< emacs-major-version 28) (require 'subr-x))
+      (condition-case-unless-debug err
+          (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                   ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+                                                   ,@(when-let ((depth (plist-get order :depth)))
+                                                       (list (format "--depth=%d" depth) "--no-single-branch"))
+                                                   ,(plist-get order :repo) ,repo))))
+                   ((zerop (call-process "git" nil buffer t "checkout"
+                                         (or (plist-get order :ref) "--"))))
+                   (emacs (concat invocation-directory invocation-name))
+                   ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                         "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                   ((require 'elpaca))
+                   ((elpaca-generate-autoloads "elpaca" repo)))
+              (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+            (error "%s" (with-current-buffer buffer (buffer-string))))
+        ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+    (unless (require 'elpaca-autoloads nil t)
+      (require 'elpaca)
+      (elpaca-generate-autoloads "elpaca" repo)
+      (load "./elpaca-autoloads")))
+  (add-hook 'after-init-hook #'elpaca-process-queues)
+  (elpaca `(,@elpaca-order))
+
+  (elpaca elpaca-use-package
+    (elpaca-use-package-mode)
+    (setq elpaca-use-package-by-default t))
+
+
+  (use-package emacs :ensure nil :config (setq ring-bell-function #'ignore))
+
+#+end_src
+
+* Install Evil Mode
+
+#+begin_src emacs-lisp
+
+  (use-package evil :ensure t :demand t :init (setq evil-want-keybinding nil) (evil-mode))
+  (use-package evil-collection :after evil :ensure t :demand t :config (setq evil-collection-mode-list '(dashboard dired ibuffer)) (evil-collection-init))
+
+#+end_src
+
+* Fonts and Appearance
+
+** Theme
+
+#+begin_src emacs-lisp
+
+  (add-to-list 'custom-theme-load-path "~/.config/emacs/themes")
+  (load-theme 'dtmacs t)
+
+#+end_src
+
+** All The Icons
+#+begin_src emacs-lisp
+(use-package all-the-icons :ensure t :if (display-graphic-p))
+(use-package all-the-icons-dired :hook (dired-mode . (lambda () (all-the-icons-dired-mode t))))
+#+end_src
+
+** Fonts
+
+#+begin_src emacs-lisp
+
+  (set-face-attribute 'default nil
+    :font "JetBrainsMono NF SemiBold"
+    :height 110)
+  (set-face-attribute 'fixed-pitch nil
+    :font "JetBrainsMono NF SemiBold"
+    :height 110)
+  ;; Makes commented text and keywords italics.
+  ;; This is working in emacsclient but not emacs.
+  ;; Your font must have an italic face available.
+  (set-face-attribute 'font-lock-comment-face nil
+    :slant 'italic)
+  (set-face-attribute 'font-lock-keyword-face nil
+    :slant 'italic)
+
+  ;; This sets the default font on all graphical frames created after restarting Emacs.
+  ;; Does the same thing as 'set-face-attribute default' above, but emacsclient fonts
+  ;; are not right unless I also add this method of setting the default font.
+  (add-to-list 'default-frame-alist '(font . "JetBrainsMono NF SemiBold-11"))
+
+  ;; Uncomment the following line if line spacing needs adjusting.
+  (setq-default line-spacing 0.12)
+
+#+end_src
+  
+** GUI Settings
+
+*** Disable Interface
+
+#+begin_src emacs-lisp
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (setq inhibit-startup-message t) 
+#+end_src
+
+*** Display Line Numbers and Truncated Lines
+
+#+begin_src emacs-lisp
+  (global-display-line-numbers-mode 1)
+  (global-visual-line-mode 1)
+#+end_src
+
+* Install General Keybindings
+
+#+begin_src emacs-lisp
+
+    (use-package general
+      :ensure t
+      :config
+      (general-evil-setup)
+
+      (general-create-definer leader-keys
+        :states '(normal insert visual emacs)
+        :keymaps 'override
+        :prefix "SPC"
+        :global-prefix "M-SPC")
+
+      (leader-keys
+        "b" '(:ignore t :wk "Buffer")
+        "bb" '(switch-to-buffer :wk "Switch buffer")
+        "bi" '(ibuffer :wk "IBuffer")
+        "bk" '(kill-this-buffer :wk "Kill this buffer")
+        "bn" '(next-buffer :wk "Next buffer")
+        "bp" '(previous-buffer :wk "Previous buffer")
+        "br" '(revert-buffer :wk "Reload buffer"))
+
+      (leader-keys
+        "e" '(:ignore t :wk "Eval")
+        "e b" '(eval-buffer :wk "Eval Buffer")
+        "e r" '(eval-region :wk "Eval Region")
+        )
+
+      (leader-keys
+        "f" '(:ignore t :wk "File")
+        "f f" '(find-file :wk "Find File")
+        "f l" '(load-file :wk "Load File")
+        "f r" '((lambda () (interactive) (load-file "~/.config/emacs/init.el")) :wk "Reload Config File")
+        "f c" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Open Config File")
+        )
+  
+  (leader-keys 
+  "d" '(:ignore t :wk "Dired")
+    "d n" '((lambda () (interactive) (dired "~/Documents/Notes")) :wk "Open Notes Folder in Dired")
+  )
+
+      (leader-keys
+        "w" '(:ignore t :wk "Window")
+        "w c" '(evil-window-delete :wk "Close window")
+        "w n" '(evil-window-new :wk "New Window")
+        "w s" '(evil-window-new :wk "Horizontal Split Window")
+        "w v" '(evil-window-new :wk "Vertical Split Window")
+        )
+
+      )
+#+end_src
+
+* Which-Key
+
+#+begin_src emacs-lisp
+
+  (use-package which-key
+    :ensure t
+    :init
+    (which-key-mode 1)
+    :config
+    (setq which-key-side-window-location 'bottom
+	  which-key-sort-order #'which-key-key-order-alpha
+	  which-key-sort-uppercase-first nil
+	  which-key-add-column-padding 1
+	  which-key-max-display-columns nil
+	  which-key-min-display-lines 6
+	  which-key-side-window-slot -10
+	  which-key-side-window-max-height 0.25
+	  which-key-idle-delay 0.8
+	  which-key-max-description-length 25
+	  which-key-allow-imprecise-window-fit t
+	  which-key-separator " => " ))
+
+#+end_src
+
+* Org Mode Configurations
+
+** Enable Table of Contents
+
+#+begin_src emacs-lisp
+  (use-package toc-org
+    :ensure t
+    :commands toc-org-enable
+    :init (add-hook 'org-mode-hook 'toc-org-enable))
+#+end_src
+
+** Enable Org Bullets
+
+#+begin_src emacs-lisp
+  (add-hook 'org-mode-hook 'org-indent-mode)
+  (use-package org-bullets :ensure t :demand t)
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+#+end_src
+
+** Disable Electric Indent 
+Fix weird indentation in org mode source blocks.
+
+#+begin_src emacs-lisp
+  (electric-indent-mode -1)
+#+end_src
+
+** Org-tempo
+Adds a package that handles easier source block insertion.
+Example: <s + TAB.
+
+#+begin_src emacs-lisp
+  (require 'org-tempo)
+#+end_src
+
+** Enable inline images on startup
+
+#+begin_src emacs-lisp
+  (setq org-startup-with-inline-images t)
+#+end_src
+
+** Setup org-download 
+
+#+begin_src emacs-lisp
+  (use-package org-download)
+  (add-hook 'dired-mode-hook 'org-download-enable)
+#+end_src
+
+* IVY and Counsel
+Ivy is a generic completion engine for Emacs.
+
+** Ivy
+
+#+begin_src emacs-lisp
+  (use-package ivy
+    :bind
+    (("C-c C-r" . ivy-resume)
+     ("C-x B" . ivy-switch-buffer-other-window))
+    :custom
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-count-format "(%d/%d) ")
+    (setq enable-recursive-minibuffers t)
+    :config
+    (ivy-mode))
+#+end_src
+
+** Counsel
+
+#+begin_src emacs-lisp
+  (use-package counsel :after ivy :config (counsel-mode))
+#+end_src
+
+** All-the-icons-ivy
+#+begin_src emacs-lisp
+  (use-package all-the-icons-ivy-rich :ensure t :init (all-the-icons-ivy-rich-mode 1))
+#+end_src
+
+** Ivy-rich
+#+begin_src emacs-lisp
+  (use-package ivy-rich
+    :after ivy
+    :ensure t
+    :init (ivy-rich-mode 1)
+    :custom
+    (ivy-virtual-abbreviate 'full
+                            ivy-rich-switch-buffer-align-virtual-buffer t
+                            ivy-rich-path-style 'abbrev)
+    :config
+    (ivy-set-display-transformer 'ivy-switch-buffer
+                                 'ivy-rich-switch-buffer-transformer))
+#+end_src
+
+* Shells and Terminals
+
+** Eshell
+
+** Vterm
+  (use-package vterm
+    :config
+    (setq shell-file-name "C:/Program Files/Git/bin/bash.exe"
+          vterm-max-scrollback 5000))
+** Vterm-toggle
+(use-package vterm-toggle
+  :after vterm
+  :config
+  (setq vterm-toggle-fullscreen-p nil)
+  (setq vterm-toggle-scope 'project)
+  (add-to-list 'display-buffer-alist
+               '((lambda (buffer-or-name _)
+                     (let ((buffer (get-buffer buffer-or-name)))
+                       (with-current-buffer buffer
+                         (or (equal major-mode 'vterm-mode)
+                             (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
+                  (display-buffer-reuse-window display-buffer-at-bottom)
+                  ;;(display-buffer-reuse-window display-buffer-in-direction)
+                  ;;display-buffer-in-direction/direction/dedicated is added in emacs27
+                  ;;(direction . bottom)
+                  ;;(dedicated . t) ;dedicated is supported in emacs27
+                  (reusable-frames . visible)
+                  (window-height . 0.3))))
