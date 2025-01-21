@@ -84,53 +84,124 @@
 (global-visual-line-mode 1)
 
 (use-package general
-    :ensure t
-    :config
-    (general-evil-setup)
+        :ensure t
+        :config
+        (general-evil-setup)
 
-    (general-create-definer leader-keys
-      :states '(normal insert visual emacs)
-      :keymaps 'override
-      :prefix "SPC"
-      :global-prefix "M-SPC")
+        (general-create-definer leader-keys
+          :states '(normal insert visual emacs)
+          :keymaps 'override
+          :prefix "SPC"
+          :global-prefix "M-SPC")
 
-    (leader-keys
-      "b" '(:ignore t :wk "Buffer")
-      "bb" '(switch-to-buffer :wk "Switch buffer")
-      "bi" '(ibuffer :wk "IBuffer")
-      "bk" '(kill-this-buffer :wk "Kill this buffer")
-      "bn" '(next-buffer :wk "Next buffer")
-      "bp" '(previous-buffer :wk "Previous buffer")
-      "br" '(revert-buffer :wk "Reload buffer"))
+        (leader-keys
+          "b" '(:ignore t :wk "Buffer")
+          "bb" '(switch-to-buffer :wk "Switch buffer")
+          "bi" '(ibuffer :wk "IBuffer")
+          "bk" '(kill-this-buffer :wk "Kill this buffer")
+          "bn" '(next-buffer :wk "Next buffer")
+          "bp" '(previous-buffer :wk "Previous buffer")
+          "br" '(revert-buffer :wk "Reload buffer"))
 
-    (leader-keys
-      "e" '(:ignore t :wk "Eval")
-      "e b" '(eval-buffer :wk "Eval Buffer")
-      "e r" '(eval-region :wk "Eval Region")
-      )
 
-    (leader-keys
-      "f" '(:ignore t :wk "File")
-      "f f" '(find-file :wk "Find File")
-      "f l" '(load-file :wk "Load File")
-      "f r" '((lambda () (interactive) (load-file "~/.config/emacs/init.el")) :wk "Reload Config File")
-      "f c" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Open Config File")
-      )
+        (leader-keys
+          "f" '(:ignore t :wk "File")
+          "f f" '(find-file :wk "Find File")
+          "f l" '(load-file :wk "Load File")
+          "f r" '((lambda () (interactive) (load-file "~/.config/emacs/init.el")) :wk "Reload Config File")
+          "f c" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Open Config File")
+          )
 
-(leader-keys 
-"d" '(:ignore t :wk "Dired")
-  "d n" '((lambda () (interactive) (dired "~/Documents/Notes")) :wk "Open Notes Folder in Dired")
-)
 
-    (leader-keys
-      "w" '(:ignore t :wk "Window")
-      "w c" '(evil-window-delete :wk "Close window")
-      "w n" '(evil-window-new :wk "New Window")
-      "w s" '(evil-window-new :wk "Horizontal Split Window")
-      "w v" '(evil-window-new :wk "Vertical Split Window")
-      )
+        (leader-keys "n" '(neotree-toggle :wk "Toggle neotree file viewer"))
 
+    (leader-keys 
+    "d" '(:ignore t :wk "Dired")
+      "d n" '((lambda () (interactive) (dired "~/Documents/Notes")) :wk "Open Notes Folder in Dired")
     )
+
+        (leader-keys
+          "w" '(:ignore t :wk "Window")
+          "w c" '(evil-window-delete :wk "Close window")
+          "w n" '(evil-window-new :wk "New Window")
+          "w s" '(evil-window-new :wk "Horizontal Split Window")
+          "w v" '(evil-window-new :wk "Vertical Split Window")
+          )
+
+(leader-keys
+   "g" '(:ignore t :wk "Git")    
+   "g /" '(magit-displatch :wk "Magit dispatch")
+   "g ." '(magit-file-displatch :wk "Magit file dispatch")
+   "g b" '(magit-branch-checkout :wk "Switch branch")
+   "g c" '(:ignore t :wk "Create") 
+   "g c b" '(magit-branch-and-checkout :wk "Create branch and checkout")
+   "g c c" '(magit-commit-create :wk "Create commit")
+   "g c f" '(magit-commit-fixup :wk "Create fixup commit")
+   "g C" '(magit-clone :wk "Clone repo")
+   "g f" '(:ignore t :wk "Find") 
+   "g f c" '(magit-show-commit :wk "Show commit")
+   "g f f" '(magit-find-file :wk "Magit find file")
+   "g f g" '(magit-find-git-config-file :wk "Find gitconfig file")
+   "g F" '(magit-fetch :wk "Git fetch")
+   "g g" '(magit-status :wk "Magit status")
+   "g i" '(magit-init :wk "Initialize git repo")
+   "g l" '(magit-log-buffer-file :wk "Magit buffer log")
+   "g r" '(vc-revert :wk "Git revert file")
+   "g s" '(magit-stage-file :wk "Git stage file")
+   "g t" '(git-timemachine :wk "Git time machine")
+   "g u" '(magit-stage-file :wk "Git unstage file"))
+
+ (leader-keys
+    "s" '(:ignore t :wk "Search")
+    "s d" '(dictionary-search :wk "Search dictionary")
+    "s m" '(man :wk "Man pages")
+    "s o" '(pdf-occur :wk "Pdf search lines matching STRING")
+    "s t" '(tldr :wk "Lookup TLDR docs for a command")
+    "s w" '(woman :wk "Similar to man but doesn't require man"))
+
+
+  (leader-keys
+      "w" '(:ignore t :wk "Windows/Words")
+      ;; Window splits
+      "w c" '(evil-window-delete :wk "Close window")
+      "w n" '(evil-window-new :wk "New window")
+      "w s" '(evil-window-split :wk "Horizontal split window")
+      "w v" '(evil-window-vsplit :wk "Vertical split window")
+      ;; Window motions
+      "w h" '(evil-window-left :wk "Window left")
+      "w j" '(evil-window-down :wk "Window down")
+      "w k" '(evil-window-up :wk "Window up")
+      "w l" '(evil-window-right :wk "Window right")
+      "w w" '(evil-window-next :wk "Goto next window")
+      ;; Move Windows
+      "w H" '(buf-move-left :wk "Buffer move left")
+      "w J" '(buf-move-down :wk "Buffer move down")
+      "w K" '(buf-move-up :wk "Buffer move up")
+      "w L" '(buf-move-right :wk "Buffer move right")
+      ;; Words
+      "w d" '(downcase-word :wk "Downcase word")
+      "w u" '(upcase-word :wk "Upcase word")
+      "w =" '(count-words :wk "Count words/lines for buffer"))
+
+        )
+
+(use-package company
+  :defer 2
+  :diminish
+  :custom
+  (company-begin-commands '(self-insert-command))
+  (company-idle-delay .1)
+  (company-minimum-prefix-length 2)
+  (company-show-numbers t)
+  (company-tooltip-align-annotations 't)
+  (global-company-mode t))
+
+(use-package company-box
+  :after company
+  :diminish
+  :hook (company-mode . company-box-mode))
+
+(use-package diminish)
 
 (use-package which-key
   :ensure t
@@ -141,14 +212,25 @@
 	which-key-sort-order #'which-key-key-order-alpha
 	which-key-sort-uppercase-first nil
 	which-key-add-column-padding 1
-	which-key-max-display-columns nil
-	which-key-min-display-lines 6
+	which-key-max-display-columns 20
+	which-key-min-display-lines 15
 	which-key-side-window-slot -10
 	which-key-side-window-max-height 0.25
 	which-key-idle-delay 0.8
 	which-key-max-description-length 25
 	which-key-allow-imprecise-window-fit t
 	which-key-separator " => " ))
+
+(use-package git-timemachine
+  :after git-timemachine
+  :hook (evil-normalize-keymaps . git-timemachine-hook)
+  :config
+    (evil-define-key 'normal git-timemachine-mode-map (kbd "C-j") 'git-timemachine-show-previous-revision)
+    (evil-define-key 'normal git-timemachine-mode-map (kbd "C-k") 'git-timemachine-show-next-revision)
+)
+
+(elpaca transient)
+(use-package magit :after transient)
 
 (use-package toc-org
   :ensure t
@@ -167,6 +249,32 @@
 
 (use-package org-download)
 (add-hook 'dired-mode-hook 'org-download-enable)
+
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1)
+  :config
+  (setq doom-modeline-height 20      ;; sets modeline height
+        doom-modeline-bar-width 5    ;; sets right bar width
+        doom-modeline-persp-name t   ;; adds perspective name to modeline
+        doom-modeline-persp-icon t)) ;; adds folder icon next to persp name
+
+(use-package neotree
+:config
+(setq neo-smart-open t
+      neo-show-hidden-files t
+      neo-window-width 55
+      neo-window-fixed-size nil
+      inhibit-compacting-font-caches t
+      projectile-switch-project-action 'neotree-projectile-action) 
+      ;; truncate long file names in neotree
+      (add-hook 'neo-after-create-hook
+         #'(lambda (_)
+             (with-current-buffer (get-buffer neo-buffer-name)
+               (setq truncate-lines t)
+               (setq word-wrap nil)
+               (make-local-variable 'auto-hscroll-mode)
+               (setq auto-hscroll-mode nil)))))
 
 (use-package ivy
   :bind
